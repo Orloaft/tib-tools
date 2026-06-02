@@ -1,0 +1,22 @@
+{
+  "name": "tib-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone developer tooling for the TIB game (content graph, GM admin channel, and more). Reads the game repo as a sibling via TIB_GAME_DIR.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "graph": "node src/cli/graph-report.ts",
+    "graph:check": "node src/cli/graph-report.ts --check",
+    "graph:json": "node src/cli/graph-report.ts --json",
+    "admin:ping": "node src/cli/admin-ping.ts",
+    "check": "npm run typecheck && npm run graph:check"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

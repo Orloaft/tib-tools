@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+
+    "noEmit": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // The game repo is read as a sibling. This alias lets us reuse the game's
+    // real types (no duplication); it assumes the default checkout location
+    // (../tib). Runtime honours TIB_GAME_DIR; type-checking always uses ../tib.
+    "baseUrl": ".",
+    "paths": {
+      "@game/*": ["../tib/*"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}
