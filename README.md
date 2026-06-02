@@ -77,14 +77,18 @@ and a self-contained HTML explorer.
 
 ```bash
 npm run doctor                 # run every check, exit 1 on errors
-npm run doctor:refs -- wolf    # inbound + outbound references for any entity
+npm run doctor:list -- monster # browse entities by kind (discover ids)
+npm run doctor:refs -- wolf    # inbound + outbound refs (fuzzy id + "did you mean")
 npm run doctor:report          # write out/content-doctor.html (gitignored)
 ```
 
 Adds checks the substrate didn't have: unobtainable items (granted by no
 source), shop/drop/quest item refs, orphan abilities, empty zones, duplicate
-ids. The HTML report is a searchable 3-pane explorer (entities · references ·
-findings) with no external libraries.
+ids. The CLIs are coloured (severity-aware, auto-off when piped) with `--help`.
+The HTML report is a searchable 3-pane explorer — clickable stat header,
+per-kind/severity filter chips, an inline reference node-diagram for the
+selected entity, finding↔entity links, keyboard nav, and `#hash` deep-links —
+all in one self-contained file with no external libraries.
 
 ### GM Dashboard (`src/gm-dashboard/`, on the dev admin channel)
 
@@ -100,8 +104,12 @@ npm run gm                     # serves http://127.0.0.1:7070  (GM_PORT to chang
 
 The dashboard server holds one admin connection, merges the server's delta
 snapshots into a full world model, and bridges the browser with zero deps:
-Server-Sent Events (`GET /events`) for live state and `POST /command` for
-control.
+Server-Sent Events (`GET /events`) for live state, `POST /command` for control,
+and `GET /meta` to populate the spawn/grant pickers from the real catalog.
+Click an entity to inspect its full stats, click a tile for context actions
+(teleport/spawn here), watch the live event feed, and follow a player on the
+minimap. It shows a live/reconnecting status badge and survives a game restart
+(both the admin link and the browser SSE auto-reconnect).
 
 ### World Doctor (`src/world-doctor/`, on the game adapter)
 
@@ -109,8 +117,9 @@ Map-integrity QA. Loads every floor's tiles, flood-fills reachability from
 START across walking + portals, and checks the world holds together.
 
 ```bash
-npm run world          # run all checks, exit 1 on errors
-npm run world:atlas    # write out/world-atlas.html (interactive map)
+npm run world                      # all checks, grouped by floor, exit 1 on errors
+npm run world -- --severity error  # filter by severity; also --floor <n>
+npm run world:atlas                # write out/world-atlas.html (interactive map)
 ```
 
 Checks: portals whose landing is blocked or leads to a missing floor;
@@ -120,7 +129,8 @@ portals. The reachability model matches the engine's collision exactly
 (orthogonal moves, 0.56-tile footprint) and accounts for the key-gated Jungle
 Vault transport, so warnings are real, not artifacts. The atlas colours each
 floor by reachable / unreachable / safe / road / blocked / portal with entity
-dots — the sealed regions show up at a glance.
+dots; click a finding to fly to and pulse its exact tile, zoom/pan the map,
+hover a portal for its destination, and step through issues with next/prev.
 
 ### Economy Simulator (`src/economy/`, on the content graph + `balance.ts`)
 
@@ -128,8 +138,11 @@ Turns the static balance numbers into a progression projection: time-to-level
 per skill, combat leveling by checkpoint, and the gold faucet/sink ledger.
 
 ```bash
-npm run economy        # human report (signals, skill table, combat, gold)
-npm run economy:json   # machine-readable
+npm run economy                              # coloured report (signals + tables)
+npm run economy -- --skill mining            # per-skill level-by-level dive
+npm run economy -- --efficiency 0.5 --max-level 99   # tune the model
+npm run economy:report                       # write out/economy.html (charts)
+npm run economy:json                         # machine-readable
 ```
 
 Reads every XP source and cost live from the catalog; the few server-private
@@ -137,8 +150,10 @@ action timings (swing speeds, smithing recipes) are mirrored in `rates.ts` with
 a keep-in-sync note. It leads with **signals** — e.g. the skill curve is shallow
 (everything maxes in minutes-to-hours), smithing is content-capped at ~level 4
 (only 6 forges exist), one monster is the universal best XP farm, and quest gold
-covers the starter kit several times over. Action efficiency (~70%) and the
-level cap are documented model parameters.
+covers the starter kit several times over. The model parameters (action
+efficiency, level cap, milestones) are exposed as flags and echoed in the
+report. The HTML report adds hand-drawn charts: the XP curve, per-skill
+time-to-level bars, combat xp/gold by checkpoint, and the gold ledger.
 
 ## Roadmap
 
@@ -166,5 +181,5 @@ src/
   gm-dashboard/   GM Dashboard: SSE server + vanilla-JS frontend
   world-doctor/   World Doctor: floors, portals, reachability, checks, atlas
   economy/        Economy Simulator: rates, xp curve, skills, combat, gold
-  cli/            CLIs (graph-report, content-doctor, admin-ping, gm-dashboard, world-doctor, economy)
+  cli/            CLIs + format.ts (shared ANSI colour / table styling)
 ```

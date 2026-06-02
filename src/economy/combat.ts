@@ -1,4 +1,5 @@
 import type { Balance, Catalog, Shared } from "../game/index.ts";
+import type { ResolvedOptions } from "./options.ts";
 import { round1, xpBetween } from "./xp.ts";
 
 export interface ProfileCombat {
@@ -32,8 +33,9 @@ export interface CombatAnalysis {
  * to farm for player-xp and for gold, and the projected hours to climb between
  * checkpoints. Survivable = the profile kills it before it kills them 1v1.
  */
-export function analyzeCombat(shared: Shared, catalog: Catalog, balance: Balance): CombatAnalysis {
-  const profiles = balance.DEFAULT_COMBAT_PROFILES;
+export function analyzeCombat(shared: Shared, catalog: Catalog, balance: Balance, opt: ResolvedOptions): CombatAnalysis {
+  // Only checkpoints at or below the target cap are relevant to the projection.
+  const profiles = balance.DEFAULT_COMBAT_PROFILES.filter((p) => p.level <= opt.maxLevel);
   const monsters = Object.entries(catalog.MONSTERS);
 
   const perProfile: ProfileCombat[] = profiles.map((profile) => {

@@ -1,9 +1,17 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
-import { connectAdminWorld, type AdminWorldConnection } from "../admin/index.ts";
+import { connectAdminWorld, type AdminWorldConnection, type AdminStatus } from "../admin/index.ts";
 import type { AdminCommand } from "../admin/index.ts";
 import type { MergedWorld } from "../admin/index.ts";
+import { loadCatalog } from "../game/index.ts";
+
+/** Catalog-derived option lists the frontend uses to populate its pickers. */
+interface DashboardMeta {
+  monsters: Array<{ id: string; name: string }>;
+  items: Array<{ id: string; label: string }>;
+  floors: number[];
+}
 
 export interface DashboardOptions {
   /** HTTP port to serve on. Default 7070 (env GM_PORT). */
@@ -48,9 +56,25 @@ export async function startDashboard(opts: DashboardOptions = {}): Promise<Dashb
   // Live SSE clients. Each gets the latest world on connect, then on every push.
   const sseClients = new Set<http.ServerResponse>();
 
+  // Catalog-derived option lists for the frontend pickers. Loaded once, lazily,
+  // so a missing/locked catalog only degrades the dropdowns (not the dashboard).
+  let metaPromise: Promise<DashboardMeta> | undefined;
+  const getMeta = (): Promise<DashboardMeta> => {
+    if (!metaPromise) metaPromise = buildMeta(() => admin?.getWorld());
+    return metaPromise;
+  };
+
   let latestWorld: MergedWorld | undefined;
   let lastPush = 0;
   let pendingTimer: NodeJS.Timeout | undefined;
+  let adminStatus: AdminStatus = "connecting";
+
+  const broadcastStatus = (status: AdminStatus) => {
+    adminStatus = status;
+    if (sseClients.size === 0) return;
+    const payload = `event: status\ndata: ${JSON.stringify({ status })}\n\n`;
+    for (const res of sseClients) res.write(payload);
+  };
 
   const pushWorld = (world: MergedWorld) => {
     latestWorld = world;
@@ -79,18 +103,34 @@ export async function startDashboard(opts: DashboardOptions = {}): Promise<Dashb
     admin = await connectAdminWorld({
       url: opts.gameUrl,
       name: opts.name,
-      onWorld: pushWorld
+      onWorld: pushWorld,
+      onStatus: broadcastStatus
     });
   } catch (err) {
     throw new Error(`GM Dashboard could not reach the game server: ${(err as Error).message}`);
   }
+  adminStatus = admin.status;
 
   const server = http.createServer((req, res) => {
     const url = new URL(req.url ?? "/", `http://localhost:${port}`);
     const pathname = url.pathname;
 
     if (req.method === "GET" && pathname === "/events") {
-      handleEvents(req, res, sseClients, admin.getWorld());
+      handleEvents(req, res, sseClients, admin.getWorld(), adminStatus);
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/meta") {
+      getMeta().then(
+        (meta) => {
+          res.writeHead(200, { "content-type": "application/json" });
+          res.end(JSON.stringify(meta));
+        },
+        (err: unknown) => {
+          res.writeHead(500, { "content-type": "application/json" });
+          res.end(JSON.stringify({ error: (err as Error).message }));
+        }
+      );
       return;
     }
 
@@ -128,7 +168,8 @@ function handleEvents(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   clients: Set<http.ServerResponse>,
-  seed: MergedWorld
+  seed: MergedWorld,
+  status: AdminStatus
 ): void {
   res.writeHead(200, {
     "content-type": "text/event-stream",
@@ -136,12 +177,45 @@ function handleEvents(
     connection: "keep-alive",
     "x-accel-buffering": "no"
   });
-  // Send the current world immediately so a fresh page is never blank.
+  // Seed the current liveness and world immediately so a fresh page is never
+  // blank and shows the right connection state on load.
+  res.write(`event: status\ndata: ${JSON.stringify({ status })}\n\n`);
   res.write(`event: world\ndata: ${JSON.stringify(seed)}\n\n`);
   clients.add(res);
   req.on("close", () => {
     clients.delete(res);
   });
+}
+
+/**
+ * Build the picker option lists from the live game catalog. Falls back to floor
+ * ids from the current world if the catalog can't be loaded, so the endpoint
+ * always returns something useful.
+ */
+async function buildMeta(currentWorld: () => MergedWorld | undefined): Promise<DashboardMeta> {
+  const worldFloors = (): number[] => {
+    const w = currentWorld();
+    return w ? (w.maps.length ? w.maps : w.floors) : [];
+  };
+  try {
+    const catalog = await loadCatalog();
+    const monsters = Object.entries(catalog.MONSTERS)
+      .map(([id, m]) => ({ id, name: m.name ?? id }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const items = Object.entries(catalog.ITEMS)
+      .map(([id, it]) => ({ id, label: it.label ?? id }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+    // Prefer the live world's floor list; fall back to floors seen in spawns.
+    let floors = worldFloors();
+    if (floors.length === 0) {
+      const set = new Set<number>();
+      for (const s of catalog.MONSTER_SPAWNS) set.add(s.floor);
+      floors = [...set].sort((a, b) => a - b);
+    }
+    return { monsters, items, floors };
+  } catch {
+    return { monsters: [], items: [], floors: worldFloors() };
+  }
 }
 
 function handleCommand(req: http.IncomingMessage, res: http.ServerResponse, admin: AdminWorldConnection): void {

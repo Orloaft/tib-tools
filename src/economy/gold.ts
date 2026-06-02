@@ -1,5 +1,4 @@
 import type { Catalog } from "../game/index.ts";
-import { round1 } from "./xp.ts";
 
 export interface LedgerEntry {
   label: string;
@@ -41,7 +40,10 @@ export function analyzeGold(catalog: Catalog, bestEarlyGoldPerHour: number): Gol
     { label: `All quests (${Object.keys(catalog.QUESTS).length}) one-time`, gold: questGoldTotal, kind: "oneTime" }
   ];
 
-  const hoursToAffordKit = bestEarlyGoldPerHour > 0 ? round1(starterKitCost / bestEarlyGoldPerHour) : Infinity;
+  // Keep 2 decimals: a fast early gold rate buys the kit in a couple of minutes,
+  // and round1 would flatten that to "0".
+  const hoursToAffordKit =
+    bestEarlyGoldPerHour > 0 ? Math.round((starterKitCost / bestEarlyGoldPerHour) * 100) / 100 : Infinity;
 
   return { faucets, sinks, starterKitCost, questGoldTotal, bestEarlyGoldPerHour, hoursToAffordKit };
 }

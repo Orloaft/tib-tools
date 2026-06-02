@@ -10,37 +10,70 @@
     <header class="topbar">
       <h1>TIB · GM Dashboard</h1>
       <div class="status">
-        <span id="conn" class="badge badge-bad">connecting…</span>
         <span class="stat">players <b id="c-players">0</b></span>
         <span class="stat">monsters <b id="c-monsters">0</b></span>
         <span class="stat">npcs <b id="c-npcs">0</b></span>
         <span class="stat">corpses <b id="c-corpses">0</b></span>
+        <span class="stat">resources <b id="c-nodes">0</b></span>
+        <span id="conn" class="badge badge-bad" title="connection to the dashboard stream">connecting…</span>
       </div>
     </header>
 
     <main class="layout">
+      <!-- Left: minimap + map context actions -->
       <section class="panel map-panel">
         <div class="panel-head">
           <h2>Minimap</h2>
-          <label>floor
-            <select id="floor-select"></select>
-          </label>
+          <div class="head-controls">
+            <label class="check"><input type="checkbox" id="follow" /> follow</label>
+            <label>floor
+              <select id="floor-select"></select>
+            </label>
+          </div>
         </div>
-        <canvas id="minimap" width="600" height="600"></canvas>
+        <div class="map-wrap">
+          <canvas id="minimap" width="640" height="640"></canvas>
+          <div id="map-tip" class="map-tip" hidden></div>
+          <div id="map-menu" class="map-menu" hidden></div>
+        </div>
         <div class="legend">
           <span><i class="dot dot-player"></i>player</span>
           <span><i class="dot dot-monster"></i>monster</span>
           <span><i class="dot dot-npc"></i>npc</span>
           <span><i class="dot dot-corpse"></i>corpse</span>
           <span><i class="dot dot-node"></i>resource</span>
+          <span class="legend-hint">click an entity to inspect · click a tile for actions</span>
         </div>
       </section>
 
-      <section class="panel list-panel">
-        <div class="panel-head"><h2>Entities by floor</h2></div>
-        <div id="floor-lists" class="floor-lists"></div>
+      <!-- Middle: roster (top) + selection detail (bottom) -->
+      <section class="panel mid-panel">
+        <div class="tabs">
+          <button class="tab active" data-tab="roster">Roster</button>
+          <button class="tab" data-tab="detail">Selection</button>
+          <button class="tab" data-tab="feed">Events <span id="feed-badge" class="tab-badge" hidden>0</span></button>
+        </div>
+
+        <div class="tab-body" data-pane="roster">
+          <div id="roster" class="roster"></div>
+        </div>
+
+        <div class="tab-body" data-pane="detail" hidden>
+          <div id="detail" class="detail">
+            <p class="empty">Nothing selected. Click an entity on the minimap or in the roster.</p>
+          </div>
+        </div>
+
+        <div class="tab-body" data-pane="feed" hidden>
+          <div class="feed-head">
+            <label class="check"><input type="checkbox" id="feed-floor-only" /> this floor only</label>
+            <button id="feed-clear" class="mini-btn">clear</button>
+          </div>
+          <div id="feed" class="feed"></div>
+        </div>
       </section>
 
+      <!-- Right: controls -->
       <section class="panel control-panel">
         <div class="panel-head"><h2>Controls</h2></div>
         <div id="toast" class="toast"></div>
@@ -48,7 +81,7 @@
         <fieldset>
           <legend>Spawn monster</legend>
           <div class="row">
-            <input id="sp-monster" placeholder="monster type (e.g. wolf)" />
+            <select id="sp-monster" class="grow"><option value="">monster…</option></select>
           </div>
           <div class="row">
             <input id="sp-floor" type="number" placeholder="floor" />
@@ -69,23 +102,23 @@
         </fieldset>
 
         <fieldset>
-          <legend>Grant</legend>
+          <legend>Grant (GM character)</legend>
           <div class="row">
             <input id="gr-gold" type="number" placeholder="gold" />
             <input id="gr-hp" type="number" placeholder="hp" />
             <input id="gr-favor" type="number" placeholder="favor" />
           </div>
           <div class="row">
-            <input id="gr-item-id" placeholder="item id" />
+            <select id="gr-item-id" class="grow"><option value="">item…</option></select>
             <input id="gr-item-qty" type="number" placeholder="qty" />
           </div>
           <button data-cmd="grant">Grant</button>
         </fieldset>
 
         <fieldset>
-          <legend>/dev</legend>
+          <legend>/dev command</legend>
           <div class="row">
-            <input id="dev-args" placeholder="args (optional)" />
+            <input id="dev-args" placeholder="args (optional)" class="grow" />
           </div>
           <button data-cmd="dev">Run /dev</button>
         </fieldset>

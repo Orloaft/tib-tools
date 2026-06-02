@@ -40,6 +40,13 @@ export interface ReferenceGraph {
   inbound(key: string): GraphEdge[];
   /** Resolve a bare id (or `kind:id`) to node keys (may be ambiguous across kinds). */
   resolve(idOrKey: string): GraphNode[];
+  /**
+   * Loose lookup: substring/fuzzy id+label matches, ranked best-first. Used for
+   * "did you mean …" suggestions when an exact `resolve` finds nothing.
+   */
+  suggest(query: string, limit?: number): GraphNode[];
+  /** All nodes of a given kind (sorted by id), for browsing. */
+  byKind(kind: NodeKind): GraphNode[];
 }
 
 const keyOf = (kind: NodeKind, id: string): string => `${kind}:${id}`;
@@ -156,6 +163,50 @@ export function buildGraph(model: ContentModel): ReferenceGraph {
       const matches: GraphNode[] = [];
       for (const node of nodes.values()) if (node.id === idOrKey) matches.push(node);
       return matches;
+    },
+    suggest(query, limit = 8) {
+      const q = query.toLowerCase();
+      const scored: Array<{ node: GraphNode; score: number }> = [];
+      for (const node of nodes.values()) {
+        const id = node.id.toLowerCase();
+        const label = node.label.toLowerCase();
+        const score = matchScore(q, id, label);
+        if (score > 0) scored.push({ node, score });
+      }
+      scored.sort((a, b) => b.score - a.score || a.node.key.localeCompare(b.node.key));
+      return scored.slice(0, limit).map((s) => s.node);
+    },
+    byKind(kind) {
+      const out: GraphNode[] = [];
+      for (const node of nodes.values()) if (node.kind === kind) out.push(node);
+      out.sort((a, b) => a.id.localeCompare(b.id));
+      return out;
     }
   };
+}
+
+/**
+ * Score a candidate id/label against a lowercase query. Higher is better; 0 means
+ * no match. Rewards exact > prefix > word-boundary > substring > subsequence.
+ */
+function matchScore(q: string, id: string, label: string): number {
+  let best = 0;
+  for (const hay of [id, label]) {
+    if (hay === q) best = Math.max(best, 100);
+    else if (hay.startsWith(q)) best = Math.max(best, 80);
+    else if (hay.includes("_" + q) || hay.includes(" " + q)) best = Math.max(best, 60);
+    else if (hay.includes(q)) best = Math.max(best, 40);
+    else if (isSubsequence(q, hay)) best = Math.max(best, 20);
+  }
+  return best;
+}
+
+/** True when every char of `needle` appears in `hay` in order (fuzzy match). */
+function isSubsequence(needle: string, hay: string): boolean {
+  if (!needle) return false;
+  let i = 0;
+  for (let h = 0; h < hay.length && i < needle.length; h += 1) {
+    if (hay[h] === needle[i]) i += 1;
+  }
+  return i === needle.length;
 }

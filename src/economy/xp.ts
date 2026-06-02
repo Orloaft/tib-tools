@@ -1,6 +1,6 @@
 import type { Shared } from "../game/index.ts";
 
-/** Practical content cap: ore tiers / smithing / the combat profiles top out ~50-58. */
+/** Default practical content cap: ore tiers / smithing / the combat profiles top out ~50-58. */
 export const MAX_LEVEL = 60;
 
 /** XP needed to go from `from` to `to` on the shared skill curve. */

@@ -8,7 +8,8 @@ import type {
   FishingNodeView,
   MiningNodeView,
   HerbNodeView,
-  FireView
+  FireView,
+  GameEvent
 } from "@game/src/types.ts";
 
 /**
@@ -42,7 +43,24 @@ export interface MergedWorld {
   };
   /** Sorted list of floors that currently hold any entity. */
   floors: number[];
+  /**
+   * Floor ids the server advertises (welcome `maps`), independent of whether
+   * any entity currently sits on them. Empty until the welcome arrives.
+   */
+  maps: number[];
+  /**
+   * The most recent game events (combat/chat/deaths/floats), newest last, each
+   * tagged with a monotonically increasing `seq` so the UI can append only what
+   * it has not seen. Capped to a rolling window.
+   */
+  events: WorldEvent[];
 }
+
+/** A {@link GameEvent} plus a stable, monotonic sequence id for incremental UI. */
+export type WorldEvent = GameEvent & { seq: number };
+
+/** How many recent events the model retains for the dashboard feed. */
+const EVENT_BUFFER = 250;
 
 /** A delta slice of a snapshot for one collection. */
 interface CollSpec<T> {
@@ -72,8 +90,28 @@ export class WorldModel {
   private readonly herbNodes = new Map<string, HerbNodeView>();
   private readonly fires = new Map<string, FireView>();
 
+  /** Floor ids advertised by the server (welcome `maps`). */
+  private maps: number[] = [];
+  /** Rolling event buffer (oldest first) and the next sequence id. */
+  private events: WorldEvent[] = [];
+  private eventSeq = 0;
+
+  /** Record the floor ids the server advertises (from the welcome message). */
+  setMaps(maps: number[]): void {
+    this.maps = [...maps];
+  }
+
   /** Fold one delta snapshot into the model. */
   apply(snap: StateSnapshot): void {
+    if (snap.events && snap.events.length > 0) {
+      for (const ev of snap.events) {
+        this.events.push({ ...ev, seq: this.eventSeq });
+        this.eventSeq += 1;
+      }
+      if (this.events.length > EVENT_BUFFER) {
+        this.events.splice(0, this.events.length - EVENT_BUFFER);
+      }
+    }
     merge(this.players, { items: snap.players, full: snap.playersFull, removed: snap.removedPlayerIds });
     merge(this.monsters, { items: snap.monsters, full: snap.monstersFull, removed: snap.removedMonsterIds });
     merge(this.npcs, { items: snap.npcs, full: snap.npcsFull, removed: snap.removedNpcIds });
@@ -123,7 +161,9 @@ export class WorldModel {
         herbNodes: herbNodes.length,
         fires: fires.length
       },
-      floors: [...floorSet].sort((a, b) => a - b)
+      floors: [...floorSet].sort((a, b) => a - b),
+      maps: [...this.maps],
+      events: [...this.events]
     };
   }
 
@@ -138,6 +178,7 @@ export class WorldModel {
     this.miningNodes.clear();
     this.herbNodes.clear();
     this.fires.clear();
+    this.events = [];
   }
 }
 
