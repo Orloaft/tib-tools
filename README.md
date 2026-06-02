@@ -68,27 +68,64 @@ npm run admin:ping
 
 > Admin commands require the server in dev mode (`TIB_DEV=1` or `E2E_TEST=1`).
 
+## Tools
+
+### Content Doctor (`src/content-doctor/`, on the content graph)
+
+The full content QA tool: the extended check set, a queryable reference graph,
+and a self-contained HTML explorer.
+
+```bash
+npm run doctor                 # run every check, exit 1 on errors
+npm run doctor:refs -- wolf    # inbound + outbound references for any entity
+npm run doctor:report          # write out/content-doctor.html (gitignored)
+```
+
+Adds checks the substrate didn't have: unobtainable items (granted by no
+source), shop/drop/quest item refs, orphan abilities, empty zones, duplicate
+ids. The HTML report is a searchable 3-pane explorer (entities · references ·
+findings) with no external libraries.
+
+### GM Dashboard (`src/gm-dashboard/`, on the dev admin channel)
+
+A live web panel to watch and control a running game: entity counts and
+per-floor lists, a canvas minimap, and controls (spawn, teleport, grant, `/dev`,
+emit events, respawn).
+
+```bash
+# 1. game server in dev mode (from ../tib):  E2E_TEST=1 node server/index.ts
+# 2. dashboard:
+npm run gm                     # serves http://127.0.0.1:7070  (GM_PORT to change)
+```
+
+The dashboard server holds one admin connection, merges the server's delta
+snapshots into a full world model, and bridges the browser with zero deps:
+Server-Sent Events (`GET /events`) for live state and `POST /command` for
+control.
+
 ## Roadmap
 
 These substrates feed a set of larger tools (built as front-ends, not from
 scratch):
 
-| Tool | Substrate it builds on |
-| --- | --- |
-| **GM Dashboard** — live world inspector + control panel | dev admin channel |
-| **Content Doctor** — full graph explorer + lint UI | content graph |
-| **World Doctor** — map reachability + portal QA | game adapter (`shared.ts`) |
-| **Narrative Studio** — dialogue/quest flow authoring | content graph |
-| **Economy Simulator** — progression/economy projection | content graph + `balance.ts` |
-| **Session Replay** — record/scrub playtests | dev admin channel |
-| **Visual Gallery** — auto-tour + golden diff | game adapter + admin |
+| Tool | Substrate it builds on | Status |
+| --- | --- | --- |
+| **Content Doctor** — graph explorer + lint | content graph | ✅ built |
+| **GM Dashboard** — live world inspector + control | dev admin channel | ✅ built |
+| **World Doctor** — map reachability + portal QA | game adapter (`shared.ts`) | planned |
+| **Narrative Studio** — dialogue/quest flow authoring | content graph | planned |
+| **Economy Simulator** — progression/economy projection | content graph + `balance.ts` | planned |
+| **Session Replay** — record/scrub playtests | dev admin channel | planned |
+| **Visual Gallery** — auto-tour + golden diff | game adapter + admin | planned |
 
 ## Layout
 
 ```
 src/
   game/           boundary to the game repo (locate + adapter)
-  content-graph/  substrate 1: model + checks
-  admin/          substrate 2: protocol + connector
-  cli/            smoke/utility CLIs (graph-report, admin-ping)
+  content-graph/  substrate 1: model + checks (base + extended)
+  content-doctor/ Content Doctor: grants model, reference graph, HTML report
+  admin/          substrate 2: protocol, connector, world delta-merge
+  gm-dashboard/   GM Dashboard: SSE server + vanilla-JS frontend
+  cli/            CLIs (graph-report, content-doctor, admin-ping, gm-dashboard)
 ```

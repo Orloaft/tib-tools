@@ -12,7 +12,11 @@
     "graph": "node src/cli/graph-report.ts",
     "graph:check": "node src/cli/graph-report.ts --check",
     "graph:json": "node src/cli/graph-report.ts --json",
+    "doctor": "node src/cli/content-doctor.ts check",
+    "doctor:refs": "node src/cli/content-doctor.ts refs",
+    "doctor:report": "node src/cli/content-doctor.ts report",
     "admin:ping": "node src/cli/admin-ping.ts",
+    "gm": "node src/cli/gm-dashboard.ts",
     "check": "npm run typecheck && npm run graph:check"
   },
   "devDependencies": {

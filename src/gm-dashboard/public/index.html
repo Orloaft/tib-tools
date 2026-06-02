@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TIB · GM Dashboard</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>TIB · GM Dashboard</h1>
+      <div class="status">
+        <span id="conn" class="badge badge-bad">connecting…</span>
+        <span class="stat">players <b id="c-players">0</b></span>
+        <span class="stat">monsters <b id="c-monsters">0</b></span>
+        <span class="stat">npcs <b id="c-npcs">0</b></span>
+        <span class="stat">corpses <b id="c-corpses">0</b></span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel map-panel">
+        <div class="panel-head">
+          <h2>Minimap</h2>
+          <label>floor
+            <select id="floor-select"></select>
+          </label>
+        </div>
+        <canvas id="minimap" width="600" height="600"></canvas>
+        <div class="legend">
+          <span><i class="dot dot-player"></i>player</span>
+          <span><i class="dot dot-monster"></i>monster</span>
+          <span><i class="dot dot-npc"></i>npc</span>
+          <span><i class="dot dot-corpse"></i>corpse</span>
+          <span><i class="dot dot-node"></i>resource</span>
+        </div>
+      </section>
+
+      <section class="panel list-panel">
+        <div class="panel-head"><h2>Entities by floor</h2></div>
+        <div id="floor-lists" class="floor-lists"></div>
+      </section>
+
+      <section class="panel control-panel">
+        <div class="panel-head"><h2>Controls</h2></div>
+        <div id="toast" class="toast"></div>
+
+        <fieldset>
+          <legend>Spawn monster</legend>
+          <div class="row">
+            <input id="sp-monster" placeholder="monster type (e.g. wolf)" />
+          </div>
+          <div class="row">
+            <input id="sp-floor" type="number" placeholder="floor" />
+            <input id="sp-x" type="number" placeholder="x" />
+            <input id="sp-y" type="number" placeholder="y" />
+          </div>
+          <button data-cmd="spawnMonster">Spawn</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Teleport (GM character)</legend>
+          <div class="row">
+            <input id="tp-floor" type="number" placeholder="floor" />
+            <input id="tp-x" type="number" placeholder="x" />
+            <input id="tp-y" type="number" placeholder="y" />
+          </div>
+          <button data-cmd="teleport">Teleport</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Grant</legend>
+          <div class="row">
+            <input id="gr-gold" type="number" placeholder="gold" />
+            <input id="gr-hp" type="number" placeholder="hp" />
+            <input id="gr-favor" type="number" placeholder="favor" />
+          </div>
+          <div class="row">
+            <input id="gr-item-id" placeholder="item id" />
+            <input id="gr-item-qty" type="number" placeholder="qty" />
+          </div>
+          <button data-cmd="grant">Grant</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>/dev</legend>
+          <div class="row">
+            <input id="dev-args" placeholder="args (optional)" />
+          </div>
+          <button data-cmd="dev">Run /dev</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Emit events</legend>
+          <div class="row">
+            <input id="ev-count" type="number" placeholder="count" />
+            <input id="ev-floor" type="number" placeholder="floor" />
+          </div>
+          <div class="row">
+            <input id="ev-x" type="number" placeholder="x" />
+            <input id="ev-y" type="number" placeholder="y" />
+            <input id="ev-spread" type="number" placeholder="spread" />
+          </div>
+          <button data-cmd="emitEvents">Emit</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Respawn</legend>
+          <button data-cmd="respawn">Respawn GM character</button>
+        </fieldset>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
