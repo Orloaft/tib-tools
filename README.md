@@ -177,6 +177,23 @@ the progress stage), switch to edit mode for live editing with colour-coded
 token validation and live re-lint, then **Export YAML** to paste back into the
 game (the game repo stays read-only).
 
+### Session Replay (`src/replay/`, on the dev admin channel)
+
+Record a live session through the admin channel, then scrub it in the browser.
+
+```bash
+# game server in dev mode first (E2E_TEST=1 or TIB_DEV=1)
+npm run replay:record -- --seconds 30          # capture to out/replays/session.jsonl
+npm run replay:view -- out/replays/session.jsonl   # build out/replay.html
+```
+
+The recorder folds the server's delta snapshots into a full world and writes a
+timestamped JSONL frame stream (entities + events). The viewer is a video-style
+scrubber: a timeline with play/pause and 1×/2×/4× speed, a canvas minimap of
+entity positions with HP bars, per-floor tabs, and an event log that accumulates
+to the playhead — replay what happened to debug deaths, desyncs, or mob
+behaviour.
+
 ## Roadmap
 
 These substrates feed a set of larger tools (built as front-ends, not from
@@ -189,7 +206,7 @@ scratch):
 | **World Doctor** — map reachability + portal QA | game adapter (`shared.ts`) | ✅ built |
 | **Economy Simulator** — progression/economy projection | content graph + `balance.ts` | ✅ built |
 | **Narrative Studio** — dialogue lint + preview + authoring | content graph | ✅ built |
-| **Session Replay** — record/scrub playtests | dev admin channel | planned |
+| **Session Replay** — record/scrub playtests | dev admin channel | ✅ built |
 | **Visual Gallery** — auto-tour + golden diff | game adapter + admin | planned |
 
 ## Layout
@@ -204,5 +221,6 @@ src/
   world-doctor/   World Doctor: floors, portals, reachability, checks, atlas
   economy/        Economy Simulator: rates, xp curve, skills, combat, gold
   narrative/      Narrative Studio: tokens, model, lint, serialize, studio
+  replay/         Session Replay: recorder + scrubber viewer
   cli/            CLIs + format.ts (shared ANSI colour / table styling)
 ```

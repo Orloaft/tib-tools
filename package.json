@@ -25,6 +25,8 @@
     "narrative:studio": "node src/cli/narrative.ts studio",
     "admin:ping": "node src/cli/admin-ping.ts",
     "gm": "node src/cli/gm-dashboard.ts",
+    "replay:record": "node src/cli/replay.ts record",
+    "replay:view": "node src/cli/replay.ts view",
     "check": "npm run typecheck && npm run graph:check"
   },
   "devDependencies": {
