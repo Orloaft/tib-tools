@@ -103,6 +103,25 @@ snapshots into a full world model, and bridges the browser with zero deps:
 Server-Sent Events (`GET /events`) for live state and `POST /command` for
 control.
 
+### World Doctor (`src/world-doctor/`, on the game adapter)
+
+Map-integrity QA. Loads every floor's tiles, flood-fills reachability from
+START across walking + portals, and checks the world holds together.
+
+```bash
+npm run world          # run all checks, exit 1 on errors
+npm run world:atlas    # write out/world-atlas.html (interactive map)
+```
+
+Checks: portals whose landing is blocked or leads to a missing floor;
+walkable areas sealed off from START (with the content stranded inside);
+spawns/resource-nodes/NPCs/trees on blocked or unreachable tiles; one-way
+portals. The reachability model matches the engine's collision exactly
+(orthogonal moves, 0.56-tile footprint) and accounts for the key-gated Jungle
+Vault transport, so warnings are real, not artifacts. The atlas colours each
+floor by reachable / unreachable / safe / road / blocked / portal with entity
+dots — the sealed regions show up at a glance.
+
 ## Roadmap
 
 These substrates feed a set of larger tools (built as front-ends, not from
@@ -112,7 +131,7 @@ scratch):
 | --- | --- | --- |
 | **Content Doctor** — graph explorer + lint | content graph | ✅ built |
 | **GM Dashboard** — live world inspector + control | dev admin channel | ✅ built |
-| **World Doctor** — map reachability + portal QA | game adapter (`shared.ts`) | planned |
+| **World Doctor** — map reachability + portal QA | game adapter (`shared.ts`) | ✅ built |
 | **Narrative Studio** — dialogue/quest flow authoring | content graph | planned |
 | **Economy Simulator** — progression/economy projection | content graph + `balance.ts` | planned |
 | **Session Replay** — record/scrub playtests | dev admin channel | planned |
@@ -127,5 +146,6 @@ src/
   content-doctor/ Content Doctor: grants model, reference graph, HTML report
   admin/          substrate 2: protocol, connector, world delta-merge
   gm-dashboard/   GM Dashboard: SSE server + vanilla-JS frontend
-  cli/            CLIs (graph-report, content-doctor, admin-ping, gm-dashboard)
+  world-doctor/   World Doctor: floors, portals, reachability, checks, atlas
+  cli/            CLIs (graph-report, content-doctor, admin-ping, gm-dashboard, world-doctor)
 ```
