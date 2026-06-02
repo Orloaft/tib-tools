@@ -21,6 +21,8 @@
     "economy": "node src/cli/economy.ts",
     "economy:json": "node src/cli/economy.ts --json",
     "economy:report": "node src/cli/economy.ts report",
+    "narrative": "node src/cli/narrative.ts lint",
+    "narrative:studio": "node src/cli/narrative.ts studio",
     "admin:ping": "node src/cli/admin-ping.ts",
     "gm": "node src/cli/gm-dashboard.ts",
     "check": "npm run typecheck && npm run graph:check"

@@ -155,6 +155,28 @@ efficiency, level cap, milestones) are exposed as flags and echoed in the
 report. The HTML report adds hand-drawn charts: the XP curve, per-skill
 time-to-level bars, combat xp/gold by checkpoint, and the gold ledger.
 
+### Narrative Studio (`src/narrative/`, on the content graph)
+
+Quest-dialogue QA + authoring. Lints every quest's dialogue, previews it in a
+faithful in-game dialogue box, and exports edited YAML.
+
+```bash
+npm run narrative                         # lint all quest dialogue (exit 1 on errors)
+npm run narrative -- preview southgate    # render a quest's dialogue in the terminal
+npm run narrative -- yaml southgate       # print the dialogue YAML block
+npm run narrative:studio                  # write out/narrative.html
+```
+
+The lint mirrors the server's token resolver exactly, so it catches dialogue
+that would render broken in-game: unknown/object tokens (render as literal
+braces / `[object Object]`), `{target.item.label}` on a quest with no reward
+item, `{progress}` outside the progress stage, lines too long for the box, and
+missing stages. The HTML studio is a writer's tool: pick a quest, click through
+the real dialogue box (gold nameplate, token resolution, a progress slider for
+the progress stage), switch to edit mode for live editing with colour-coded
+token validation and live re-lint, then **Export YAML** to paste back into the
+game (the game repo stays read-only).
+
 ## Roadmap
 
 These substrates feed a set of larger tools (built as front-ends, not from
@@ -166,7 +188,7 @@ scratch):
 | **GM Dashboard** — live world inspector + control | dev admin channel | ✅ built |
 | **World Doctor** — map reachability + portal QA | game adapter (`shared.ts`) | ✅ built |
 | **Economy Simulator** — progression/economy projection | content graph + `balance.ts` | ✅ built |
-| **Narrative Studio** — dialogue/quest flow authoring | content graph | planned |
+| **Narrative Studio** — dialogue lint + preview + authoring | content graph | ✅ built |
 | **Session Replay** — record/scrub playtests | dev admin channel | planned |
 | **Visual Gallery** — auto-tour + golden diff | game adapter + admin | planned |
 
@@ -181,5 +203,6 @@ src/
   gm-dashboard/   GM Dashboard: SSE server + vanilla-JS frontend
   world-doctor/   World Doctor: floors, portals, reachability, checks, atlas
   economy/        Economy Simulator: rates, xp curve, skills, combat, gold
+  narrative/      Narrative Studio: tokens, model, lint, serialize, studio
   cli/            CLIs + format.ts (shared ANSI colour / table styling)
 ```
