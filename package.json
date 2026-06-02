@@ -17,6 +17,8 @@
     "doctor:report": "node src/cli/content-doctor.ts report",
     "world": "node src/cli/world-doctor.ts check",
     "world:atlas": "node src/cli/world-doctor.ts atlas",
+    "economy": "node src/cli/economy.ts",
+    "economy:json": "node src/cli/economy.ts --json",
     "admin:ping": "node src/cli/admin-ping.ts",
     "gm": "node src/cli/gm-dashboard.ts",
     "check": "npm run typecheck && npm run graph:check"

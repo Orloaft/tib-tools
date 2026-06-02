@@ -122,6 +122,24 @@ Vault transport, so warnings are real, not artifacts. The atlas colours each
 floor by reachable / unreachable / safe / road / blocked / portal with entity
 dots — the sealed regions show up at a glance.
 
+### Economy Simulator (`src/economy/`, on the content graph + `balance.ts`)
+
+Turns the static balance numbers into a progression projection: time-to-level
+per skill, combat leveling by checkpoint, and the gold faucet/sink ledger.
+
+```bash
+npm run economy        # human report (signals, skill table, combat, gold)
+npm run economy:json   # machine-readable
+```
+
+Reads every XP source and cost live from the catalog; the few server-private
+action timings (swing speeds, smithing recipes) are mirrored in `rates.ts` with
+a keep-in-sync note. It leads with **signals** — e.g. the skill curve is shallow
+(everything maxes in minutes-to-hours), smithing is content-capped at ~level 4
+(only 6 forges exist), one monster is the universal best XP farm, and quest gold
+covers the starter kit several times over. Action efficiency (~70%) and the
+level cap are documented model parameters.
+
 ## Roadmap
 
 These substrates feed a set of larger tools (built as front-ends, not from
@@ -132,8 +150,8 @@ scratch):
 | **Content Doctor** — graph explorer + lint | content graph | ✅ built |
 | **GM Dashboard** — live world inspector + control | dev admin channel | ✅ built |
 | **World Doctor** — map reachability + portal QA | game adapter (`shared.ts`) | ✅ built |
+| **Economy Simulator** — progression/economy projection | content graph + `balance.ts` | ✅ built |
 | **Narrative Studio** — dialogue/quest flow authoring | content graph | planned |
-| **Economy Simulator** — progression/economy projection | content graph + `balance.ts` | planned |
 | **Session Replay** — record/scrub playtests | dev admin channel | planned |
 | **Visual Gallery** — auto-tour + golden diff | game adapter + admin | planned |
 
@@ -147,5 +165,6 @@ src/
   admin/          substrate 2: protocol, connector, world delta-merge
   gm-dashboard/   GM Dashboard: SSE server + vanilla-JS frontend
   world-doctor/   World Doctor: floors, portals, reachability, checks, atlas
-  cli/            CLIs (graph-report, content-doctor, admin-ping, gm-dashboard, world-doctor)
+  economy/        Economy Simulator: rates, xp curve, skills, combat, gold
+  cli/            CLIs (graph-report, content-doctor, admin-ping, gm-dashboard, world-doctor, economy)
 ```

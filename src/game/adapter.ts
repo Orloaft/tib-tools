@@ -10,10 +10,12 @@ import { locateGame } from "./locate.ts";
 export type Catalog = typeof import("@game/src/generated/catalog.ts");
 export type Shared = typeof import("@game/src/shared.ts");
 export type Wire = typeof import("@game/src/wire.ts");
+export type Balance = typeof import("@game/src/balance.ts");
 
 let catalogPromise: Promise<Catalog> | undefined;
 let sharedPromise: Promise<Shared> | undefined;
 let wirePromise: Promise<Wire> | undefined;
+let balancePromise: Promise<Balance> | undefined;
 
 function importFromGame<T>(relPath: string): Promise<T> {
   const abs = join(locateGame(), relPath);
@@ -55,4 +57,12 @@ export function loadWire(): Promise<Wire> {
     wirePromise = importFromGame<Wire>("src/wire.ts");
   }
   return wirePromise;
+}
+
+/** The balance model — combat metrics (TTK/TTD, xp/min) and player profiles. */
+export function loadBalance(): Promise<Balance> {
+  if (!balancePromise) {
+    balancePromise = importFromGame<Balance>("src/balance.ts");
+  }
+  return balancePromise;
 }
