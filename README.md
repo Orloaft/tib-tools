@@ -194,6 +194,25 @@ entity positions with HP bars, per-floor tabs, and an event log that accumulates
 to the playhead — replay what happened to debug deaths, desyncs, or mob
 behaviour.
 
+### Visual Gallery (`src/gallery/`, on the game adapter)
+
+Auto-tours every zone in the live client, screenshots the world, and diffs each
+shot against a blessed baseline to catch tileset/biome regressions.
+
+```bash
+npm run gallery          # start an e2e game, tour all zones, diff, build out/gallery/
+npm run gallery:accept   # bless the current shots as the baseline
+npm run gallery:report   # re-diff existing shots and rebuild the gallery
+```
+
+It drives the client with Playwright and diffs PNGs with pngjs — both borrowed
+from the game's own install (resolved through the adapter), so tib-tools stays
+dependency-free. It starts vite + the server in their own process groups and
+tears them down cleanly. The diff threshold sits above live-entity movement, so
+"changed" means a real tileset change; the gallery shows shot / golden / diff
+side by side for review. Output (shots, golden, diffs, index.html) is local
+under `out/gallery/`.
+
 ## Roadmap
 
 These substrates feed a set of larger tools (built as front-ends, not from
@@ -207,7 +226,10 @@ scratch):
 | **Economy Simulator** — progression/economy projection | content graph + `balance.ts` | ✅ built |
 | **Narrative Studio** — dialogue lint + preview + authoring | content graph | ✅ built |
 | **Session Replay** — record/scrub playtests | dev admin channel | ✅ built |
-| **Visual Gallery** — auto-tour + golden diff | game adapter + admin | planned |
+| **Visual Gallery** — auto-tour + golden diff | game adapter | ✅ built |
+
+All seven tools are built. The two substrates (content graph, dev admin channel)
+plus the game adapter carried the whole set.
 
 ## Layout
 
@@ -222,5 +244,6 @@ src/
   economy/        Economy Simulator: rates, xp curve, skills, combat, gold
   narrative/      Narrative Studio: tokens, model, lint, serialize, studio
   replay/         Session Replay: recorder + scrubber viewer
+  gallery/        Visual Gallery: tour, pngjs diff, gallery builder
   cli/            CLIs + format.ts (shared ANSI colour / table styling)
 ```
